@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini AI Chat</title>
+    <style>
+        :root {
+            --bg-light: #f4f4f4;
+            --bg-dark: #1e1e1e;
+            --text-light: #333;
+            --text-dark: #fff;
+            --container-light: #fff;
+            --container-dark: #2a2a2a;
+            --button-light: #007bff;
+            --button-dark: #0056b3;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            text-align: center;
+            padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .dark-mode {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 500px;
+            background: var(--container-light);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            margin: auto;
+            transition: background 0.3s;
+        }
+
+        .dark-mode .container {
+            background: var(--container-dark);
+        }
+
+        .toggle-box {
+            width: 60px;
+            height: 30px;
+            background: #ccc;
+            border-radius: 15px;
+            position: relative;
+            margin: 10px auto;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-slider {
+            width: 28px;
+            height: 28px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            transition: transform 0.3s;
+        }
+
+        .dark-mode .toggle-box {
+            background: #007bff;
+        }
+
+        .dark-mode .toggle-slider {
+            transform: translateX(30px);
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            transition: all 0.3s;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        button {
+            padding: 10px 15px;
+            background: var(--button-light);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            display: block;
+            margin: auto;
+        }
+
+        button:hover {
+            background: var(--button-dark);
+            transform: scale(1.05);
+        }
+
+        .response-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            text-align: left;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s, transform 0.5s;
+            line-height: 1.6;
+        }
+
+        .show-response {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dark-mode .response-box {
+            background: #333;
+            color: #fff;
+        }
+
+        .response-box ul {
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="toggle-box" onclick="toggleDarkMode()">
+        <div class="toggle-slider"></div>
+    </div>
+    <div class="container">
+        <h2>ANKIT'S AI</h2> 
+        <input type="text" id="userInput" placeholder="Type your question...">
+        <button onclick="askGemini()">Ask</button>
+        <div id="response" class="response-box"></div>
+    </div>
+
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+
+        async function askGemini() {
+            const apiKey = "bcbnmcbabknjdcbdsjb"; // Replace with your actual API key
+            const userInput = document.getElementById("userInput").value;
+            const responseDiv = document.getElementById("response");
+
+            if (!userInput) {
+                responseDiv.innerHTML = "<b style='color:red;'>Please enter a question!</b>";
+                return;
+            }
+
+            responseDiv.innerHTML = "<b>Thinking... ⏳</b>";
+            responseDiv.classList.remove("show-response");
+
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ role: "user", parts: [{ text: userInput }] }]
+                    })
+                });
+
+                const data = await res.json();
+                console.log("API Response:", data); // Debugging log to check response structure
+
+                if (data && data.candidates && data.candidates.length > 0 && data.candidates[0].content.parts.length > 0) {
+                    const responseText = data.candidates[0].content.parts[0].text;
+                    const responseLines = responseText.split('\n');
+                    let formattedResponse = "<h3>Response:</h3><ul>";
+                    responseLines.forEach(line => {
+                        if (line.trim()) {
+                            formattedResponse += `<li>${line}</li>`;
+                        }
+                    });
+                    formattedResponse += "</ul>";
+                    responseDiv.innerHTML = formattedResponse;
+                    responseDiv.classList.add("show-response");
+                } else {
+                    responseDiv.innerHTML = "<b style='color:red;'>No response from AI.</b>";
+                }
+            } catch (error) {
+                responseDiv.innerHTML = "<b style='color:red;'>Error fetching response.</b>";
+                console.error("Error:", error);
+            }
+        }
+    </script>
+</body>
+</html>
